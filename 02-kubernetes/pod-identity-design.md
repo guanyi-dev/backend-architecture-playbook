@@ -5,90 +5,66 @@ Image a workflow consume data from 9 channel valkey PubSub, process data transfo
 
 ### Data Flow
 ```mermaid
----
-config:
-  theme: dark
-  flowchart:
-    curve: linear
-    nodeSpacing: 35
-    rankSpacing: 45
----
+%%{init: {
+  "theme": "dark",
+  "flowchart": {
+    "curve": "linear",
+    "nodeSpacing": 35,
+    "rankSpacing": 45
+  }
+}}%%
 
 flowchart TB
 
-%% =====================================================
-%% Source: Valkey / Redis PubSub channels
-%% =====================================================
+    subgraph VALKEY["Valkey / Redis PubSub Channels"]
+        direction TB
+        C0["...pubsub-channel-*0"]
+        C1["...pubsub-channel-*1"]
+        C2["...pubsub-channel-*2"]
+        C3["...pubsub-channel-*3"]
+        C4["...pubsub-channel-*4"]
+        C5["...pubsub-channel-*5"]
+        C6["...pubsub-channel-*6"]
+        C7["...pubsub-channel-*7"]
+        C8["...pubsub-channel-*8"]
+        C9["...pubsub-channel-*9"]
+    end
 
-subgraph VALKEY["Valkey / Redis PubSub Channels<br/>(Search Topics)"]
-    direction TB
+    HELM["Helm Chart<br/>helm-kafka-transformer-chart<br/><br/>TOTAL_PODS = 3<br/>ORDINAL_INDEX = pod-index"]
 
-    C0["...pubsub-channel-*0"]
-    C1["...pubsub-channel-*1"]
-    C2["...pubsub-channel-*2"]
-    C3["...pubsub-channel-*3"]
-    C4["...pubsub-channel-*4"]
-    C5["...pubsub-channel-*5"]
-    C6["...pubsub-channel-*6"]
-    C7["...pubsub-channel-*7"]
-    C8["...pubsub-channel-*8"]
-    C9["...pubsub-channel-*9"]
-end
+    C5 --> HELM
 
-%% =====================================================
-%% Helm Configuration
-%% =====================================================
+    subgraph PODS["Kafka Transformer StatefulSet"]
+        direction LR
 
-HELM["Helm Chart<br/><b>helm-kafka-transformer-chart</b><br/><br/>statefulset.yaml<br/>env:<br/>TOTAL_PODS: 6<br/>ORDINAL_INDEX: metadata.labels[...pod-index]"]
+        P0["kafka-transformer-0<br/><br/>Subscribes:<br/>*0, *3, *6, *9"]
 
-VALKEY --> HELM
+        P1["kafka-transformer-1<br/><br/>Subscribes:<br/>*1, *4, *7"]
 
-%% =====================================================
-%% StatefulSet Pods
-%% =====================================================
+        P2["kafka-transformer-2<br/><br/>Subscribes:<br/>*2, *5, *8"]
+    end
 
-subgraph PODS["Kafka Transformer StatefulSet"]
-direction LR
+    HELM --> P0
+    HELM --> P1
+    HELM --> P2
 
-P0["<b>kafka-transformer-0</b><br/>(ordinal=0)<br/><br/>generatePubSubPattern<br/>(idx=0,total=6)<br/><br/><b>Subscribes to:</b><br/>*0, *6<br/><br/>(digit % 6 == 0)"]
+    KAFKA[("Kafka (MSK)<br/>Topic: ndc-gsc-offers")]
 
-P1["<b>kafka-transformer-1</b><br/>(ordinal=1)<br/><br/>generatePubSubPattern<br/>(idx=1,total=6)<br/><br/><b>Subscribes to:</b><br/>*1, *7<br/><br/>(digit % 6 == 1)"]
+    P0 --> KAFKA
+    P1 --> KAFKA
+    P2 --> KAFKA
 
-P2["<b>kafka-transformer-2</b><br/>(ordinal=2)<br/><br/>generatePubSubPattern<br/>(idx=2,total=6)<br/><br/><b>Subscribes to:</b><br/>*2, *8<br/><br/>(digit % 6 == 2)"]
+    classDef source fill:#20242b,stroke:#d7dce2,color:#fff;
+    classDef config fill:#252a32,stroke:#d7dce2,color:#fff;
+    classDef pod fill:#20242b,stroke:#d7dce2,color:#fff;
+    classDef kafka fill:#2b3038,stroke:#d7dce2,color:#fff;
 
-end
+    class C0,C1,C2,C3,C4,C5,C6,C7,C8,C9 source;
+    class HELM config;
+    class P0,P1,P2 pod;
+    class KAFKA kafka;
 
-HELM --> P0
-HELM --> P1
-HELM --> P2
-
-%% =====================================================
-%% Kafka
-%% =====================================================
-
-KAFKA[("Kafka (MSK)<br/><br/>Topic: ndc-gsc-offers<br/>Key: Origin + Destination + Date")]
-
-P0 --> KAFKA
-P1 --> KAFKA
-P2 --> KAFKA
-
-%% =====================================================
-%% Styling
-%% =====================================================
-
-classDef source fill:#20242b,stroke:#d7dce2,color:#ffffff,stroke-width:1.5px;
-classDef config fill:#252a32,stroke:#d7dce2,color:#ffffff,stroke-width:2px;
-classDef pod fill:#20242b,stroke:#d7dce2,color:#ffffff,stroke-width:1.5px;
-classDef kafka fill:#2b3038,stroke:#d7dce2,color:#ffffff,stroke-width:2px;
-
-class C0,C1,C2,C3,C4,C5,C6,C7,C8,C9 source;
-class HELM config;
-class P0,P1,P2 pod;
-class KAFKA kafka;
-
-style VALKEY fill:#181b20,stroke:#d7dce2,color:#ffffff
-style PODS fill:transparent,stroke:transparent
-
+    style VALKEY fill:#181b20,stroke:#d7dce2
 ```
 
 ### Solution
