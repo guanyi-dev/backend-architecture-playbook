@@ -73,3 +73,12 @@ When setup access to MSK, S3, Nessie and Iceberg, we want "credentials without s
         name: my-job
         uid: 3a8d0d9b-1234-5678-abcd-111122223333
         ```
+
+### When is k8s a poor place to run Spark?
+When I design spark-on-k8-platform, I always ask myself this question. I came up with 3 cases:
+- Shuffle-heavy batch jobs with no checkpoints:
+  Spark executor shuffle data over the network. In k8s, if an executor died and restarted, it got moved to a new node and all shuffled data gone. 
+- Short-lived jobs (especially for run duration < pod startup duration):
+  Spark's driver/executor bootstrap is rather expensive unlike python scripts starts in < 1s. Even a fast spark job needs 30-90 s before data reach CPU. This is definitely too much for tiny spark jobs.
+- Tight latency SLAs:
+  k8s adds networking (kube-proxy). Spark on k8s communicates via k8s API for executor discovery, not direct rpc like YARN. For streaming job with sub-second latency this adds overhead.
