@@ -20,7 +20,7 @@ This repository documents engineering concepts, architectural patterns, design d
 ```
 backend-architecture-playbook/
 ├── Kafka
-├── Spark
+├── MCP
 ├── Kubernetes
 ├── Redis
 ├── PostgreSQL
@@ -30,7 +30,6 @@ backend-architecture-playbook/
 ├── Observability
 ├── System Design
 ├── Production Projects
-└── Engineering Decision Records
 ```
 
 ## What You'll Find
