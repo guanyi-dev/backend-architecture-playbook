@@ -5,3 +5,4 @@
 •  Design a Metrics & Observability Platform
 •  Design a Rate Limiting Service
 •  Design a Kafka-based Streaming Pipeline
+•  Design a Library Management System
